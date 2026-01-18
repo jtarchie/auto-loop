@@ -1,41 +1,43 @@
 # auto-loop
 
-Iteratively run copilot commands across a list of targets.
+Run copilot commands across targets from stdin.
 
 ## Usage
 
 ```bash
 <command> | ./auto-loop.sh <model> <prompt> [-- <copilot-flags>]
+<command> | ./auto-parallel.sh <model> <prompt> [--parallel N] [-- <copilot-flags>]
 ```
 
-Reads targets from stdin, running copilot for each. Always runs with `--silent`.
-Defaults to `--allow-all-tools --disallow-temp-dir` if no flags provided.
+Both default to `--allow-all-tools --disallow-temp-dir --silent`.
+`auto-parallel.sh` uses git worktrees in `.worktrees/` (reused across runs).
 
 ## Examples
 
 ```bash
-# Basic usage
 find . -name "*.ts" | ./auto-loop.sh gpt-4 "Fix the issue in"
-git diff --name-only HEAD~1 | ./auto-loop.sh claude-sonnet "Refactor"
-rg -l 'slog\.' --type go | ./auto-loop.sh gpt-4 "Replace slog with zerolog in"
-
-# With custom copilot flags
-find . -name "*.go" | ./auto-loop.sh gpt-4 "Add tests for" -- --yolo
-cat files.txt | ./auto-loop.sh claude-sonnet "Review" -- --agent
+git diff --name-only HEAD~1 | ./auto-loop.sh claude-sonnet "Refactor" -- --yolo
+cat features.md | ./auto-parallel.sh claude-sonnet-4.5 "Implement" --parallel 4 -- --agent task
 ```
 
-## Usage from Different Directories
+## Worktree Management
+
+After work completes, review changes in each worktree:
 
 ```bash
-# From any project directory
-cd ~/projects/my-api
-find . -name "*.go" | ~/workspace/auto-loop/auto-loop.sh gpt-4 "Add error handling to"
+for w in .worktrees/worker-*; do git -C "$w" status; done
+```
 
-# Using absolute paths
-cd /tmp
-find ~/projects/webapp -name "*.tsx" | ~/workspace/auto-loop/auto-loop.sh gpt-4 "Refactor"
+Merge changes back to main:
 
-# Mix relative finds with absolute script path
-cd ~/projects/frontend
-rg -l 'useState' | ~/workspace/auto-loop/auto-loop.sh claude-sonnet "Convert to useReducer in"
+```bash
+for w in .worktrees/worker-*; do git -C "$w" push origin HEAD; done
+git pull
+```
+
+Clean up worktrees:
+
+```bash
+git worktree remove .worktrees/worker-*
+rm -rf .worktrees/
 ```
