@@ -27,7 +27,7 @@ cd ..
 
 echo ""
 echo "==> Adding features in parallel (2 workers)"
-timeout 180 bash -c "cat examples/features.txt | '$SCRIPT_DIR/auto-parallel.sh' claude-sonnet-4.5 'In the Express app at examples/, implement:' --parallel 2"
+timeout 180 bash -c "cat examples/features.txt | '$SCRIPT_DIR/auto-parallel.sh' gpt-5-mini 'In the Express app at examples/, implement:' --parallel 2"
 
 echo ""
 echo "==> Review changes in worktrees:"
