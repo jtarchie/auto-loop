@@ -7,6 +7,9 @@ commands in batch mode across multiple targets. It's a small utility project (<
 100 lines of shell script) designed to automate copilot tasks over lists of
 files, features, or other inputs.
 
+**Design Philosophy**: Shell scripts must be **minimal and succinct**. Keep code
+terse, avoid unnecessary complexity, and prioritize readability through brevity.
+
 **Type**: Shell utility scripts\
 **Size**: Minimal (3 shell scripts + 1 example Node.js app)\
 **Languages**: Bash (primary), JavaScript (examples only)\
@@ -50,7 +53,9 @@ via git worktrees
 ### Configuration
 
 - **`.gitignore`**: Excludes `.worktrees/` directory only
-- **No linters, CI/CD, or code formatters configured**
+- **Shell linting**: shellcheck 0.11.0+ required for all shell script changes
+- **Shell formatting**: shfmt 3.12.0+ required for all shell script changes
+- **No CI/CD configured**
 
 ## Environment Requirements
 
@@ -74,6 +79,16 @@ via git worktrees
 5. **Node.js 25.4.0+ and npm 11.7.0+** (for examples/ only)
    - Verify: `node --version && npm --version`
    - Only needed if working with the examples directory
+
+6. **shellcheck 0.11.0+** (REQUIRED for shell script modifications)
+   - Verify: `shellcheck --version`
+   - macOS: Install via `brew install shellcheck`
+   - ALWAYS run on modified shell scripts before committing
+
+7. **shfmt 3.12.0+** (REQUIRED for shell script modifications)
+   - Verify: `shfmt --version`
+   - macOS: Install via `brew install shfmt`
+   - ALWAYS run on modified shell scripts before committing
 
 ## Build, Test, and Run Commands
 
@@ -240,8 +255,28 @@ chmod +x new-script.sh
 
 ### Editing Shell Scripts
 
-- **No shellcheck configured**: Manual validation required
-- **No autoformatting**: Maintain existing indentation (tabs)
+**CRITICAL**: ALWAYS run these commands after ANY shell script modification:
+
+1. **shellcheck** (linting - catches errors and potential issues):
+
+   ```bash
+   shellcheck auto-loop.sh auto-parallel.sh tests.sh
+   ```
+
+   - Must pass with ZERO warnings or errors
+   - Fix all issues before proceeding
+
+2. **shfmt** (formatting - maintains consistent style):
+   ```bash
+   shfmt -w -i 0 auto-loop.sh auto-parallel.sh tests.sh
+   ```
+
+   - `-w`: Write result to file
+   - `-i 0`: Use tabs for indentation
+   - ALWAYS run after editing
+
+**Additional guidelines**:
+
 - **Error handling**: auto-loop.sh uses `|| exit 1`, auto-parallel.sh uses
   `|| :`
 - **Always test** changes by running the script with a simple input
@@ -270,13 +305,22 @@ When modifying scripts:
    rm -rf .worktrees/
    ```
 
-4. **Verify examples/ still works**:
+4. **Run shellcheck and shfmt** (if modifying shell scripts):
+
+   ```bash
+   shellcheck auto-loop.sh auto-parallel.sh tests.sh
+   shfmt -w -i 0 auto-loop.sh auto-parallel.sh tests.sh
+   ```
+
+5. **Verify examples/ still works** (if relevant):
    ```bash
    cd examples && npm install && npm start
    ```
 
 ### Code Style
 
+- **Philosophy**: Keep scripts **minimal and succinct** - prioritize brevity and
+  clarity
 - **Indentation**: Tabs (not spaces)
 - **Line continuations**: Not used (keep commands on single lines)
 - **Quoting**: Always quote variables: `"$var"` not `$var`
@@ -288,6 +332,8 @@ When modifying scripts:
 Before submitting changes, ALWAYS verify:
 
 - [ ] All shell scripts remain executable (`ls -la *.sh`)
+- [ ] **shellcheck passes with zero errors** (`shellcheck *.sh`)
+- [ ] **shfmt has been run** (`shfmt -w -i 0 *.sh`)
 - [ ] Scripts run without syntax errors (`bash -n script.sh`)
 - [ ] `./tests.sh` passes (if copilot API available)
 - [ ] `examples/npm start` works (if modifying examples/)
