@@ -1,6 +1,7 @@
 #!/bin/bash
 m=$1 p=$2 v=$3 i=0
-shift 2; [[ -n "$v" ]] && shift
+shift 2
+[[ -n "$v" ]] && shift
 [[ $1 == "--" ]] && shift
 [[ $# -eq 0 ]] && set -- --allow-all-tools --disallow-temp-dir
 while read -r s; do
