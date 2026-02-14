@@ -1,44 +1,38 @@
 #!/bin/bash
 set -e
 
-# Save script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DIRS=()
+trap 'rm -rf "${DIRS[@]}"' EXIT
 
-# Create temporary directory
-TEMP_DIR=$(mktemp -d)
-trap 'rm -rf "$TEMP_DIR"' EXIT
+setup() {
+	local d
+	d=$(mktemp -d)
+	DIRS+=("$d")
+	cp -r "$SCRIPT_DIR/examples" "$d/"
+	cp "$SCRIPT_DIR/auto-loop.rb" "$d/"
+	cd "$d"
+	git init -q
+	git config user.email "test@example.com"
+	git config user.name "Test User"
+	git add -A && git commit -q -m "Initial commit"
+	cd examples && npm install --silent && cd ..
+}
 
-echo "==> Setting up test environment in $TEMP_DIR"
-cp -r "$SCRIPT_DIR/examples" "$TEMP_DIR/"
-cd "$TEMP_DIR"
+echo "==> Test 1: sequential features"
+setup
+cat examples/features.txt | ./auto-loop.rb \
+	--model gpt-5-mini \
+	--prompt "In the Express app at examples/, implement:"
+git diff --stat && git log --oneline
 
-# Initialize git repo
-git init -q
-git config user.email "test@example.com"
-git config user.name "Test User"
-git add -A
-git commit -q -m "Initial commit"
+echo "==> Test 2: grouped features with after-group"
+setup
+cat examples/grouped-features.txt | ./auto-loop.rb \
+	--model gpt-5-mini \
+	--prompt "In the Express app at examples/, implement:" \
+	--group-pattern '^\*\*.*:\*\*' \
+	--after-group "cd examples && node -e 'require(\"./index\")' && cd .."
+git diff --stat && git log --oneline
 
-echo ""
-echo "==> Installing dependencies"
-cd examples
-npm install --silent
-cd ..
-
-echo ""
-echo "==> Adding features in parallel (2 workers)"
-timeout 180 bash -c "cat examples/features.txt | '$SCRIPT_DIR/auto-parallel.sh' gpt-5-mini 'In the Express app at examples/, implement:' --parallel 2"
-
-echo ""
-echo "==> Review changes in worktrees:"
-for w in .worktrees/worker-*; do
-	[[ -d "$w" ]] || continue
-	echo ""
-	echo "=== $w ==="
-	git -C "$w/examples" diff --stat 2>/dev/null || echo "  (no changes)"
-	git -C "$w" log -1 --oneline 2>/dev/null || echo "  (no commits)"
-done
-
-echo ""
-echo "==> Test completed successfully!"
-echo "Temp directory: $TEMP_DIR"
+echo "==> Tests passed!"

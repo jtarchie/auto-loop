@@ -5,41 +5,26 @@ Run copilot commands across targets from stdin.
 ## Usage
 
 ```bash
-<command> | ./auto-loop.sh <model> <prompt> [<validate-cmd>] [-- <copilot-flags>]
-<command> | ./auto-parallel.sh <model> <prompt> [--parallel N] [-- <copilot-flags>]
+<command> | ./auto-loop.rb --model <model> --prompt <prompt> [--validate <cmd>] [--group-pattern <regex>] [--after-group <cmd>] [-- <copilot-flags>]
 ```
 
-Both default to `--allow-all-tools --disallow-temp-dir --silent`. `auto-loop.sh`
-with validation command retries indefinitely until validation passes.
-`auto-parallel.sh` uses git worktrees in `.worktrees/` (reused across runs).
+Defaults to `--allow-all-tools --disallow-temp-dir --silent`. With `--validate`,
+retries indefinitely until the validation command passes.
+
+### Grouped Processing
+
+Use `--group-pattern` to group input lines by a regex. Lines matching the
+pattern start a new group; subsequent lines belong to that group. Use
+`--after-group` to run a command after each group completes.
+
+```bash
+cat tasks.md | ./auto-loop.rb --model gpt-4 --prompt "Implement" --group-pattern '^\*\*.*:\*\*' --after-group "npm test"
+```
 
 ## Examples
 
 ```bash
-find . -name "*.ts" | ./auto-loop.sh gpt-4 "Fix the issue in"
-echo "test.js" | ./auto-loop.sh claude-sonnet "Write passing tests" "npm test"
-git diff --name-only HEAD~1 | ./auto-loop.sh claude-sonnet "Refactor" -- --yolo
-cat features.md | ./auto-parallel.sh claude-sonnet-4.5 "Implement" --parallel 4 -- --agent task
-```
-
-## Worktree Management
-
-After work completes, review changes in each worktree:
-
-```bash
-for w in .worktrees/worker-*; do git -C "$w" status; done
-```
-
-Merge changes back to main:
-
-```bash
-for w in .worktrees/worker-*; do git -C "$w" push origin HEAD; done
-git pull
-```
-
-Clean up worktrees:
-
-```bash
-git worktree remove .worktrees/worker-*
-rm -rf .worktrees/
+find . -name "*.ts" | ./auto-loop.rb --model gpt-4 --prompt "Fix the issue in"
+echo "test.js" | ./auto-loop.rb --model claude-sonnet --prompt "Write passing tests" --validate "npm test"
+git diff --name-only HEAD~1 | ./auto-loop.rb --model claude-sonnet --prompt "Refactor" -- --yolo
 ```

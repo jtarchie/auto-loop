@@ -1,5 +1,7 @@
+**Users:**
 Add GET /users endpoint that returns array of users, add and run tests.
 Add POST /users endpoint to create new user, add and run tests.
 Add GET /users/:id endpoint to get user by id, add and run tests.
+**Middleware:**
 Add error handling middleware, add and run tests.
 Add request logging middleware, add and run tests.
