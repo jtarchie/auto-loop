@@ -1,0 +1,5 @@
+[S] Add a simple hello endpoint at GET /hello
+[M] Add user authentication with JWT tokens
+[L] Implement complex data aggregation with caching and optimization
+[XL] Build distributed system with service mesh and observability
+[S] Add basic health check endpoint
