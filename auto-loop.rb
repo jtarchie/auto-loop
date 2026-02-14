@@ -41,10 +41,20 @@ $stdin.each_line(chomp: true) do |line|
   end
 
   warn "[#{count += 1}] #{line}"
+  full_prompt = "#{prompt} #{line}"
+  full_prompt += ". Validate completion with: #{validate}" if validate
+  first_attempt = true
   loop do
-    full_prompt = "#{prompt} #{line}"
-    full_prompt += ". Validate completion with: #{validate}" if validate
-    if system("copilot", "--model", model, "--prompt", full_prompt, *copilot_flags, "--silent")
+    args = ["copilot", "--model", model]
+    if first_attempt
+      args += ["--prompt", full_prompt]
+      first_attempt = false
+    else
+      output = `#{validate} 2>&1`
+      args += ["--continue", "--prompt", "#{full_prompt}\n\nValidation `#{validate}` failed with output:\n#{output}\nFix and retry."]
+    end
+    args += [*copilot_flags, "--silent"]
+    if system(*args)
       break if !validate || system(validate)
     end
     exit(1) unless validate
