@@ -54,10 +54,9 @@ $stdin.each_line(chomp: true) do |line|
       args += ["--continue", "--prompt", "#{full_prompt}\n\nValidation `#{validate}` failed with output:\n#{output}\nFix and retry."]
     end
     args += [*copilot_flags, "--silent"]
-    if system(*args)
-      break if !validate || system(validate)
-    end
-    exit(1) unless validate
+    copilot_succeeded = system(*args)
+    exit(1) unless copilot_succeeded
+    break if !validate || system(validate)
   end
   group_count += 1
 end

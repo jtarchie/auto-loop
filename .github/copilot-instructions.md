@@ -48,6 +48,35 @@ support
 - **Shell formatting**: shfmt 3.12.0+ required for shell script changes
 - **No CI/CD configured**
 
+### Feature Development Workflow
+
+A structured pattern for building features using auto-loop with three files:
+
+1. **`.todos.md`** - GitHub-style checklist with grouped user stories
+   - Format: `**Group:**` headers followed by `- [ ] As a <persona>, I want...`
+   - Groups match `--group-pattern '^\*\*.*:\*\*'`
+
+2. **`.prompt.md`** - Context prefix for every task
+   - Tech stack, architecture patterns, code conventions
+   - Combined with each task line via stdin
+
+3. **`.after-group.md`** - Cleanup command after each group
+   - Typically uses more powerful model (gpt-5, gpt-5.2) for review
+   - Reviews `git diff`, refactors, updates documentation
+
+**Usage**:
+
+```bash
+cat .todos.md | ./auto-loop.rb \
+  --model gpt-5-mini \
+  --prompt "$(cat .prompt.md)" \
+  --group-pattern '^\*\*.*:\*\*' \
+  --after-group "$(cat .after-group.md)"
+```
+
+**Custom Agent**: See `.github/agents/feature-scaffolder.md` for the Feature
+Scaffolder agent that generates these three files from functional specs.
+
 ## Environment Requirements
 
 ### ALWAYS Install These First
