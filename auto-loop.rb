@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
-require "optparse"
+# frozen_string_literal: true
+
+require 'optparse'
 
 models = nil
 prompt = nil
@@ -8,31 +10,37 @@ group_pattern = nil
 after_group = nil
 
 OptionParser.new do |opts|
-  opts.on("--model MODELS", "Copilot model(s) to use (comma-separated for S/M/L/XL)") { |v| models = v.split(",").map(&:strip) }
-  opts.on("--prompt TEXT", "Prompt prefix for each line") { |v| prompt = v }
-  opts.on("--validate CMD", "Validation command (retries until passing)") { |v| validate = v }
-  opts.on("--group-pattern PAT", "Regex to match group headers") { |v| group_pattern = Regexp.new(v) }
-  opts.on("--after-group CMD", "Command to run after each group") { |v| after_group = v }
+  opts.on('--model MODELS', 'Copilot model(s) to use (comma-separated for S/M/L/XL)') do |v|
+    models = v.split(',').map(&:strip)
+  end
+  opts.on('--prompt TEXT', 'Prompt prefix for each line') { |v| prompt = v }
+  opts.on('--validate CMD', 'Validation command (retries until passing)') { |v| validate = v }
+  opts.on('--group-pattern PAT', 'Regex to match group headers') { |v| group_pattern = Regexp.new(v) }
+  opts.on('--after-group CMD', 'Command to run after each group') { |v| after_group = v }
 end.order!
 
-abort "Missing --model and --prompt" unless models && prompt
+abort 'Missing --model and --prompt' unless models && prompt
 
-SIZE_MAP = {"S" => 0, "M" => 1, "L" => 2, "XL" => 3}
+SIZE_MAP = { 'S' => 0, 'M' => 1, 'L' => 2, 'XL' => 3 }.freeze
 
 select_model = ->(size) { models[size.zero? ? 0 : (size * (models.size - 1) / 3.0).ceil] }
 
 extract_marker = lambda do |line|
-  line =~ /^\[(S|M|L|XL)\]\s*/i ? [SIZE_MAP[$1.upcase], $'] : [1, line]
+  if (m = line.match(/\[(S|M|L|XL)\]\s*/i))
+    [SIZE_MAP[m[1].upcase], line.sub(m[0], '')]
+  else
+    [1, line]
+  end
 end
 
-ARGV.shift if ARGV.first == "--"
+ARGV.shift if ARGV.first == '--'
 copilot_flags = ARGV.empty? ? %w[--allow-all-tools --disallow-temp-dir] : ARGV.dup
 
 count = 0
 group_count = 0
 
 run_group = lambda do
-  return unless after_group && group_count > 0
+  return unless after_group && group_count.positive?
 
   warn "[after-group] #{after_group}"
   system(after_group) or exit(1)
@@ -50,22 +58,23 @@ $stdin.each_line(chomp: true) do |line|
 
   marker, cleaned_line = extract_marker.call(line)
   model = select_model.call(marker)
-  size_label = SIZE_MAP.key(marker) || "M"
+  size_label = SIZE_MAP.key(marker) || 'M'
 
   warn "[#{count += 1}] [#{size_label}] #{cleaned_line}"
   full_prompt = "#{prompt} #{cleaned_line}"
   full_prompt += ". Validate completion with: #{validate}" if validate
   first_attempt = true
   loop do
-    args = ["copilot", "--model", model]
+    args = ['copilot', '--model', model]
     if first_attempt
-      args += ["--prompt", full_prompt]
+      args += ['--prompt', full_prompt]
       first_attempt = false
     else
       output = `#{validate} 2>&1`
-      args += ["--continue", "--prompt", "#{full_prompt}\n\nValidation `#{validate}` failed with output:\n#{output}\nFix and retry."]
+      args += ['--continue', '--prompt',
+               "#{full_prompt}\n\nValidation `#{validate}` failed with output:\n#{output}\nFix and retry."]
     end
-    args += [*copilot_flags, "--silent"]
+    args += [*copilot_flags, '--silent']
     copilot_succeeded = system(*args)
     exit(1) unless copilot_succeeded
     break if !validate || system(validate)
