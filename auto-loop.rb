@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'optparse'
+require 'shellwords'
 
 models = nil
 prompt = nil
@@ -36,15 +37,24 @@ end
 ARGV.shift if ARGV.first == '--'
 copilot_flags = ARGV.empty? ? %w[--allow-all-tools --disallow-temp-dir] : ARGV.dup
 
+interpolate_cmd = lambda do |cmd, group, tasks|
+  cmd.gsub('{{GROUP}}', Shellwords.escape(group || ''))
+     .gsub('{{TASKS}}', Shellwords.escape(tasks.join("\n")))
+end
+
 count = 0
 group_count = 0
+current_group = nil
+group_tasks = []
 
 run_group = lambda do
   return unless after_group && group_count.positive?
 
-  warn "[after-group] #{after_group}"
-  system(after_group) or exit(1)
+  after_group_cmd = interpolate_cmd.call(after_group, current_group, group_tasks)
+  warn "[after-group] #{after_group_cmd}"
+  system(after_group_cmd) or exit(1)
   group_count = 0
+  group_tasks = []
 end
 
 $stdin.each_line(chomp: true) do |line|
@@ -52,6 +62,7 @@ $stdin.each_line(chomp: true) do |line|
 
   if group_pattern&.match?(line)
     run_group.call
+    current_group = line
     warn "[group] #{line}"
     next
   end
@@ -79,6 +90,7 @@ $stdin.each_line(chomp: true) do |line|
     exit(1) unless copilot_succeeded
     break if !validate || system(validate)
   end
+  group_tasks << cleaned_line
   group_count += 1
 end
 
