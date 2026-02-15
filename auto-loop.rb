@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 require 'optparse'
-require 'shellwords'
 
 models = nil
 prompt = nil
@@ -38,8 +37,8 @@ ARGV.shift if ARGV.first == '--'
 copilot_flags = ARGV.empty? ? %w[--allow-all-tools --disallow-temp-dir] : ARGV.dup
 
 interpolate_cmd = lambda do |cmd, group, tasks|
-  cmd.gsub('{{GROUP}}', Shellwords.escape(group || ''))
-     .gsub('{{TASKS}}', Shellwords.escape(tasks.join("\n")))
+  cmd.gsub('{{GROUP}}', (group || '').gsub("'", "'\"'\"'"))
+     .gsub('{{TASKS}}', tasks.join("\n").gsub("'", "'\"'\"'"))
 end
 
 count = 0
