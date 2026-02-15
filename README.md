@@ -5,7 +5,7 @@ Run copilot commands across targets from stdin.
 ## Usage
 
 ```bash
-<command> | ./auto-loop.rb --model <model>[,model2,...] --prompt <prompt> [--validate <cmd>] [--group-pattern <regex>] [--after-group <cmd>] [-- <copilot-flags>]
+<command> | ./auto-loop --model <model>[,model2,...] --prompt <prompt> [--validate <cmd>] [--group-pattern <regex>] [--after-group <cmd>] [-- <copilot-flags>]
 ```
 
 Defaults to `--allow-all-tools --disallow-temp-dir --silent`. With `--validate`,
@@ -19,17 +19,17 @@ them. Tasks without markers default to `[M]` (medium).
 **Single model**: All sizes use the same model
 
 ```bash
-echo "[L] Complex refactor" | ./auto-loop.rb --model gpt-5 --prompt "Implement"
+echo "[L] Complex refactor" | ./auto-loop --model gpt-5 --prompt "Implement"
 ```
 
 **Multiple models** (comma-separated): Models are distributed across sizes
 
 ```bash
 # 2 models: S→first, M/L/XL→second
-cat features.txt | ./auto-loop.rb --model gpt-5-mini,gpt-5 --prompt "Build"
+cat features.txt | ./auto-loop --model gpt-5-mini,gpt-5 --prompt "Build"
 
 # 4 models: Perfect distribution
-cat features.txt | ./auto-loop.rb --model gpt-5-mini,gpt-5,gpt-5.2,gpt-5.2-codex --prompt "Build"
+cat features.txt | ./auto-loop --model gpt-5-mini,gpt-5,gpt-5.2,gpt-5.2-codex --prompt "Build"
 ```
 
 **Example task file**:
@@ -49,23 +49,23 @@ pattern start a new group; subsequent lines belong to that group. Use
 `--after-group` to run a command after each group completes.
 
 ```bash
-cat tasks.md | ./auto-loop.rb --model gpt-4 --prompt "Implement" --group-pattern '^\*\*.*:\*\*' --after-group "npm test"
+cat tasks.md | ./auto-loop --model gpt-4 --prompt "Implement" --group-pattern '^\*\*.*:\*\*' --after-group "npm test"
 ```
 
 ## Examples
 
 ```bash
 # Simple: one model, no size markers needed
-find . -name "*.ts" | ./auto-loop.rb --model gpt-4 --prompt "Fix the issue in"
+find . -name "*.ts" | ./auto-loop --model gpt-4 --prompt "Fix the issue in"
 
 # With validation and size marker
-echo "[S] test.js" | ./auto-loop.rb --model claude-sonnet --prompt "Write passing tests" --validate "npm test"
+echo "[S] test.js" | ./auto-loop --model claude-sonnet --prompt "Write passing tests" --validate "npm test"
 
 # Multiple models for cost optimization
-cat features.txt | ./auto-loop.rb --model gpt-5-mini,gpt-5.2 --prompt "Implement" --validate "npm test"
+cat features.txt | ./auto-loop --model gpt-5-mini,gpt-5.2 --prompt "Implement" --validate "npm test"
 
 # Custom copilot flags
-git diff --name-only HEAD~1 | ./auto-loop.rb --model claude-sonnet --prompt "Refactor" -- --yolo
+git diff --name-only HEAD~1 | ./auto-loop --model claude-sonnet --prompt "Refactor" -- --yolo
 ```
 
 ## Feature Development Workflow
@@ -109,7 +109,7 @@ copilot --model gpt-5 --prompt "Act as a senior engineer. Review recent changes 
 ### Running the Workflow
 
 ```bash
-cat .todos.md | ./auto-loop.rb \
+cat .todos.md | ./auto-loop \
   --model gpt-5-mini,gpt-5 \
   --prompt "$(cat .prompt.md)" \
   --group-pattern '^\*\*.*:\*\*' \

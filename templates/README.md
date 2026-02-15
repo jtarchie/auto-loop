@@ -19,7 +19,7 @@ These templates support the **Feature Development Workflow** pattern for
 
 3. **Run the workflow:**
    ```bash
-   cat .todos.md | ./auto-loop.rb \
+   cat .todos.md | ./auto-loop \
      --model gpt-5-mini \
      --prompt "$(cat .prompt.md)" \
      --group-pattern '^\*\*.*:\*\*' \

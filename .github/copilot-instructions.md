@@ -21,16 +21,16 @@ support
 
 ### Main Scripts (Root Directory)
 
-1. **`auto-loop.rb`**
+1. **`auto-loop`**
    - Sequential processor: pipes stdin lines → copilot CLI invocations
    - Usage:
-     `<command> | ./auto-loop.rb --model <model> --prompt <prompt> [options] [-- <copilot-flags>]`
+     `<command> | ./auto-loop --model <model> --prompt <prompt> [options] [-- <copilot-flags>]`
    - Options: `--validate`, `--group-pattern`, `--after-group`
    - Exits on first failure unless `--validate` is set (retries indefinitely)
    - Defaults: `--allow-all-tools --disallow-temp-dir --silent`
 
 2. **`tests.sh`**
-   - Integration test: sets up temp environment, runs auto-loop.rb
+   - Integration test: sets up temp environment, runs auto-loop
    - Timeout: 180 seconds
    - Requires npm for examples/ dependencies
 
@@ -39,7 +39,7 @@ support
 - **`examples/index.js`**: Basic Express.js server (15 lines, port 3000)
 - **`examples/package.json`**: Dependencies: `express@^4.18.0`
 - **`examples/features.txt`**: 5-line feature list for testing
-- **Purpose**: Demonstrates auto-loop.rb by implementing Express endpoints
+- **Purpose**: Demonstrates auto-loop by implementing Express endpoints
 
 ### Configuration
 
@@ -67,7 +67,7 @@ A structured pattern for building features using auto-loop with three files:
 **Usage**:
 
 ```bash
-cat .todos.md | ./auto-loop.rb \
+cat .todos.md | ./auto-loop \
   --model gpt-5-mini \
   --prompt "$(cat .prompt.md)" \
   --group-pattern '^\*\*.*:\*\*' \
@@ -112,22 +112,22 @@ Scaffolder agent that generates these three files from functional specs.
 
 ## Build, Test, and Run Commands
 
-### Sequential Execution (auto-loop.rb)
+### Sequential Execution (auto-loop)
 
 **ALWAYS run from repository root:**
 
 ```bash
 # Basic usage (one item per line via stdin)
-echo "path/to/file.txt" | ./auto-loop.rb --model <model> --prompt "Fix the issue in"
+echo "path/to/file.txt" | ./auto-loop --model <model> --prompt "Fix the issue in"
 
 # With validation (retries until passing)
-echo "test.js" | ./auto-loop.rb --model claude-sonnet --prompt "Write passing tests" --validate "npm test"
+echo "test.js" | ./auto-loop --model claude-sonnet --prompt "Write passing tests" --validate "npm test"
 
 # With custom copilot flags
-git diff --name-only HEAD~1 | ./auto-loop.rb --model claude-sonnet --prompt "Refactor" -- --yolo
+git diff --name-only HEAD~1 | ./auto-loop --model claude-sonnet --prompt "Refactor" -- --yolo
 
 # With grouped processing
-cat tasks.md | ./auto-loop.rb --model gpt-5 --prompt "Implement" --group-pattern '^\*\*.*:\*\*' --after-group "npm test"
+cat tasks.md | ./auto-loop --model gpt-5 --prompt "Implement" --group-pattern '^\*\*.*:\*\*' --after-group "npm test"
 ```
 
 **Valid Models** (as of Jan 2026):
@@ -151,9 +151,9 @@ cat tasks.md | ./auto-loop.rb --model gpt-5 --prompt "Implement" --group-pattern
 **What tests.sh does**:
 
 1. Creates temporary directory with git repo
-2. Copies `examples/` and `auto-loop.rb` to temp location
+2. Copies `examples/` and `auto-loop` to temp location
 3. Runs `npm install --silent` in examples/
-4. Executes `auto-loop.rb` with 180-second timeout
+4. Executes `auto-loop` with 180-second timeout
 5. Displays diff stats and commit logs
 6. Cleans up on exit (trap handler)
 
@@ -267,13 +267,13 @@ When modifying scripts:
 1. **Test with simple input first**:
 
    ```bash
-   echo "test.txt" | ./auto-loop.rb --model gpt-5-mini --prompt "List the filename"
+   echo "test.txt" | ./auto-loop --model gpt-5-mini --prompt "List the filename"
    ```
 
 2. **Validate exit codes**:
 
    ```bash
-   echo "test.txt" | ./auto-loop.rb --model <model> --prompt <prompt>
+   echo "test.txt" | ./auto-loop --model <model> --prompt <prompt>
    echo "Exit code: $?"
    ```
 
@@ -300,7 +300,7 @@ When modifying scripts:
 
 Before submitting changes, ALWAYS verify:
 
-- [ ] `ruby -c auto-loop.rb` passes (syntax check)
+- [ ] `ruby -c auto-loop` passes (syntax check)
 - [ ] Shell scripts remain executable (`ls -la *.sh`)
 - [ ] **shellcheck passes with zero errors** (`shellcheck tests.sh`)
 - [ ] **shfmt has been run** (`shfmt -w -i 0 tests.sh`)
@@ -312,7 +312,7 @@ Before submitting changes, ALWAYS verify:
 
 ```
 .
-├── auto-loop.rb           # Sequential copilot runner (Ruby, executable)
+├── auto-loop           # Sequential copilot runner (Ruby, executable)
 ├── tests.sh              # Integration test (executable)
 ├── README.md             # User documentation
 ├── LICENSE               # MIT License

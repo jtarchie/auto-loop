@@ -86,7 +86,7 @@ copilot --model gpt-5.2 --prompt "Act as a senior engineer. Review git diff for:
 After generating these files, the user runs:
 
 ```bash
-cat .todos.md | ./auto-loop.rb \
+cat .todos.md | ./auto-loop \
   --model gpt-5-mini \
   --prompt "$(cat .prompt.md)" \
   --group-pattern '^\*\*.*:\*\*' \

@@ -10,7 +10,7 @@ setup() {
 	d=$(mktemp -d)
 	DIRS+=("$d")
 	cp -r "$SCRIPT_DIR/examples" "$d/"
-	cp "$SCRIPT_DIR/auto-loop.rb" "$d/"
+	cp "$SCRIPT_DIR/auto-loop" "$d/"
 	cd "$d"
 	git init -q
 	git config user.email "test@example.com"
@@ -21,14 +21,14 @@ setup() {
 
 echo "==> Test 1: sequential features"
 setup
-cat examples/features.txt | ./auto-loop.rb \
+cat examples/features.txt | ./auto-loop \
 	--model gpt-5-mini \
 	--prompt "In the Express app at examples/, implement:"
 git diff --stat && git log --oneline
 
 echo "==> Test 2: grouped features with after-group"
 setup
-cat examples/grouped-features.txt | ./auto-loop.rb \
+cat examples/grouped-features.txt | ./auto-loop \
 	--model gpt-5-mini \
 	--prompt "In the Express app at examples/, implement:" \
 	--group-pattern '^\*\*.*:\*\*' \
