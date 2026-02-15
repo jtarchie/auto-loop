@@ -71,7 +71,7 @@ $stdin.each_line(chomp: true) do |line|
   marker, cleaned_line = extract_marker.call(line)
   model = select_model.call(marker)
 
-  warn "[#{count += 1}] [#{SIZE_MAP.key(marker) || 'M'}] #{cleaned_line}"
+  warn "[#{count += 1}:#{SIZE_MAP.key(marker) || 'M'}:#{model}] #{cleaned_line}"
   full_prompt = "#{prompt} #{cleaned_line}"
   full_prompt += ". Validate completion with: #{validate}" if validate
   use_continue = reuse && group_tasks.any?
